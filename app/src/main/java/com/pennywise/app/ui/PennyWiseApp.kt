@@ -1,5 +1,7 @@
 package com.pennywise.app.ui
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -19,12 +21,14 @@ import com.pennywise.app.ui.screens.AddEditBudgetScreen
 import com.pennywise.app.ui.screens.DashboardScreen
 import com.pennywise.app.ui.screens.TransactionsScreen
 import com.pennywise.app.ui.screens.AddEditTransactionScreen
+import com.pennywise.app.ui.screens.ProfileScreen
 import com.pennywise.app.PennyWiseApplication
 import com.pennywise.app.viewmodel.TransactionsViewModel
 import com.pennywise.app.viewmodel.BudgetViewModel
 import com.pennywise.app.viewmodel.DashboardViewModel
 import com.pennywise.app.viewmodel.DashboardViewModelFactory
 import com.pennywise.app.viewmodel.AnalyticsViewModel
+import com.pennywise.app.viewmodel.ProfileViewModel
 
 @Composable
 fun PennyWiseApp() {
@@ -49,6 +53,9 @@ fun PennyWiseApp() {
     )
     val analyticsViewModel: AnalyticsViewModel = viewModel(
         factory = AnalyticsViewModel.Factory(application.transactionRepository),
+    )
+    val profileViewModel: ProfileViewModel = viewModel(
+        factory = ProfileViewModel.Factory(application.userPreferencesRepository),
     )
 
     Scaffold(
@@ -75,12 +82,20 @@ fun PennyWiseApp() {
             navController = navController,
             startDestination = PennyWiseDestination.Dashboard.route,
             modifier = Modifier.padding(innerPadding),
+            enterTransition = { fadeIn() },
+            exitTransition = { fadeOut() },
+            popEnterTransition = { fadeIn() },
+            popExitTransition = { fadeOut() },
         ) {
             composable(PennyWiseDestination.Dashboard.route) {
                 DashboardScreen(
                     viewModel = dashboardViewModel,
+                    profileViewModel = profileViewModel,
                     onAddTransaction = {
                         navController.navigate(PennyWiseDestination.AddTransaction.route)
+                    },
+                    onOpenProfile = {
+                        navController.navigate(PennyWiseDestination.Profile.route)
                     },
                 )
             }
@@ -133,6 +148,12 @@ fun PennyWiseApp() {
                     budgetId = entry.arguments?.getString("budgetId")?.toLongOrNull(),
                     onBack = { navController.popBackStack() },
                     onSaved = { navController.popBackStack() },
+                )
+            }
+            composable(PennyWiseDestination.Profile.route) {
+                ProfileScreen(
+                    onBack = { navController.popBackStack() },
+                    viewModel = profileViewModel,
                 )
             }
         }

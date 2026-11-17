@@ -7,6 +7,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Analytics
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.PieChart
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -25,6 +26,7 @@ sealed class PennyWiseDestination(
     data object EditTransaction : PennyWiseDestination("transactions/edit", "Edit transaction", Icons.Outlined.Edit)
     data object AddBudget : PennyWiseDestination("budgets/add", "Add budget", Icons.Outlined.Add)
     data object EditBudget : PennyWiseDestination("budgets/edit", "Edit budget", Icons.Outlined.Edit)
+    data object Profile : PennyWiseDestination("profile", "Profile", Icons.Outlined.Person)
 }
 
 @Composable

@@ -1,6 +1,8 @@
 package com.pennywise.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,17 +13,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,33 +35,52 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.unit.sp
+import com.pennywise.app.ui.anime.AnimeAvatarView
+import com.pennywise.app.ui.anime.AnimeCategoryBadge
+import com.pennywise.app.ui.anime.AnimeEmptyStateIllustration
+import com.pennywise.app.ui.anime.AnimeSpeechBubbleCard
+import com.pennywise.app.ui.anime.CompanionEmotion
 import com.pennywise.app.ui.components.AmountDisplay
 import com.pennywise.app.ui.components.BudgetProgress
 import com.pennywise.app.ui.components.PennyWiseCard
 import com.pennywise.app.ui.components.PennyWisePrimaryButton
 import com.pennywise.app.ui.components.TransactionListItem
+import com.pennywise.app.ui.theme.AnimeAtmosphericBackground
+import com.pennywise.app.ui.theme.AnimeCoral
+import com.pennywise.app.ui.theme.AnimeEmerald
+import com.pennywise.app.ui.theme.ElectricViolet
+import com.pennywise.app.ui.theme.NeonCyan
 import com.pennywise.app.ui.theme.PennyWiseSpacing
-import com.pennywise.app.ui.theme.PennyWiseTheme
+import com.pennywise.app.ui.theme.SakuraPink
+import com.pennywise.app.ui.theme.SakuraPinkLight
+import com.pennywise.app.ui.theme.SoftLavender
 import com.pennywise.app.viewmodel.CategorySpending
 import com.pennywise.app.viewmodel.DashboardUiState
 import com.pennywise.app.viewmodel.DashboardViewModel
+import com.pennywise.app.viewmodel.ProfileViewModel
 import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
 fun DashboardScreen(
     onAddTransaction: () -> Unit = {},
+    onOpenProfile: () -> Unit = {},
     viewModel: DashboardViewModel,
+    profileViewModel: ProfileViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val profile by profileViewModel.profile.collectAsState()
     DashboardContent(
         uiState = uiState,
         onAddTransaction = onAddTransaction,
+        onOpenProfile = onOpenProfile,
+        profileAvatar = profile.avatar,
+        profileName = profile.displayName,
     )
 }
 
@@ -65,82 +88,115 @@ fun DashboardScreen(
 private fun DashboardContent(
     uiState: DashboardUiState,
     onAddTransaction: () -> Unit,
+    onOpenProfile: () -> Unit = {},
+    profileAvatar: String = "moon",
+    profileName: String = "",
 ) {
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddTransaction,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
+                containerColor = SakuraPink,
+                contentColor = Color.White,
+                shape = CircleShape,
+                modifier = Modifier
+                    .border(2.dp, Brush.horizontalGradient(listOf(SakuraPink, ElectricViolet)), CircleShape),
             ) {
-                Icon(Icons.Outlined.Add, contentDescription = "Add transaction")
+                Icon(Icons.Outlined.Add, contentDescription = "Add transaction", modifier = Modifier.size(28.dp))
             }
         },
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
     ) { paddingValues ->
-        LazyColumn(
+        AnimeAtmosphericBackground(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = PennyWiseSpacing.screen),
-            verticalArrangement = Arrangement.spacedBy(PennyWiseSpacing.section),
+                .padding(paddingValues),
         ) {
-            item {
-                DashboardHeader(
-                    greeting = uiState.greeting,
-                    date = uiState.currentDate,
-                )
-            }
-            if (!uiState.hasFinancialData) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = PennyWiseSpacing.screen),
+                verticalArrangement = Arrangement.spacedBy(PennyWiseSpacing.section),
+            ) {
                 item {
-                    EmptyDashboardState(onAddTransaction = onAddTransaction)
-                }
-            } else {
-                item {
-                    BalanceSummaryCard(uiState = uiState)
-                }
-                item {
-                    SpendingProgressCard(uiState = uiState)
-                }
-                item {
-                    IncomeExpenseCard(uiState = uiState)
-                }
-                item {
-                    CategorySpendingCard(categories = uiState.categorySpending)
-                }
-                item {
-                    Text(
-                        text = "Recent transactions",
-                        style = MaterialTheme.typography.titleLarge,
+                    DashboardHeader(
+                        greeting = uiState.greeting,
+                        date = uiState.currentDate,
+                        onOpenProfile = onOpenProfile,
+                        profileAvatar = profileAvatar,
+                        profileName = profileName,
                     )
                 }
-                if (uiState.recentTransactions.isEmpty()) {
+
+                if (!uiState.hasFinancialData) {
                     item {
-                        Text(
-                            text = "Your latest five transactions will appear here.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        EmptyDashboardState(onAddTransaction = onAddTransaction)
                     }
                 } else {
                     item {
-                        PennyWiseCard(modifier = Modifier.fillMaxWidth()) {
-                            uiState.recentTransactions.take(5).forEachIndexed { index, transaction ->
-                                TransactionListItem(
-                                    title = transaction.title,
-                                    category = transaction.category,
-                                    amount = signedCurrency(transaction.amount, transaction.isIncome),
-                                    date = transaction.date,
-                                    isIncome = transaction.isIncome,
-                                )
-                                if (index < uiState.recentTransactions.take(5).lastIndex) {
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                        BalanceSummaryCard(uiState = uiState)
+                    }
+
+                    item {
+                        val progress = uiState.spendingProgress
+                        val (message, emotion) = when {
+                            progress > 1.0f -> "Warning! You've exceeded your monthly budget. Let's adjust your spending routine." to CompanionEmotion.ALERT
+                            progress >= 0.8f -> "Careful! You've used ${(progress * 100).toInt()}% of your budget. Slow down on extras!" to CompanionEmotion.WARNING
+                            progress >= 0.5f -> "Steady progress! You've used ${(progress * 100).toInt()}% of your budget this month." to CompanionEmotion.ENCOURAGING
+                            else -> "Sugoi! You're doing great keeping your expenses under control!" to CompanionEmotion.JOY
+                        }
+                        AnimeSpeechBubbleCard(
+                            message = message,
+                            title = "PENNY'S INSIGHTS",
+                            emotion = emotion,
+                        )
+                    }
+
+                    item {
+                        IncomeExpenseCard(uiState = uiState)
+                    }
+
+                    item {
+                        CategorySpendingCard(categories = uiState.categorySpending)
+                    }
+
+                    item {
+                        Text(
+                            text = "Recent Transactions",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+
+                    if (uiState.recentTransactions.isEmpty()) {
+                        item {
+                            Text(
+                                text = "Your latest five transactions will appear here.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        item {
+                            PennyWiseCard(modifier = Modifier.fillMaxWidth()) {
+                                uiState.recentTransactions.take(5).forEachIndexed { index, transaction ->
+                                    TransactionListItem(
+                                        title = transaction.title,
+                                        category = transaction.category,
+                                        amount = signedCurrency(transaction.amount, transaction.isIncome),
+                                        date = transaction.date,
+                                        isIncome = transaction.isIncome,
+                                    )
+                                    if (index < uiState.recentTransactions.take(5).lastIndex) {
+                                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                                    }
                                 }
                             }
                         }
                     }
+
+                    item { Spacer(modifier = Modifier.height(72.dp)) }
                 }
-                item { Spacer(modifier = Modifier.height(72.dp)) }
             }
         }
     }
@@ -150,27 +206,43 @@ private fun DashboardContent(
 private fun DashboardHeader(
     greeting: String,
     date: String,
+    onOpenProfile: () -> Unit,
+    profileAvatar: String,
+    profileName: String,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = PennyWiseSpacing.large),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(PennyWiseSpacing.compact)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = greeting,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = greeting.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = SakuraPink,
+                letterSpacing = 1.2.sp,
             )
-            Text("Your financial overview", style = MaterialTheme.typography.headlineSmall)
+            Text(
+                text = "Financial Command",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.ExtraBold,
+            )
             Text(
                 text = date,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+
+        AnimeAvatarView(
+            avatarId = profileAvatar,
+            size = 52.dp,
+            isSelected = true,
+            onClick = onOpenProfile,
+        )
     }
 }
 
@@ -184,25 +256,46 @@ private fun BalanceSummaryCard(uiState: DashboardUiState) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top,
         ) {
-            AmountDisplay(
-                amount = uiState.monthlyBudget?.let(::formatCurrency) ?: "—",
-                label = "Total monthly budget",
-                prominent = true,
-            )
+            Column {
+                Text(
+                    text = "TOTAL MONTHLY BUDGET",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = SakuraPink,
+                    letterSpacing = 1.sp,
+                )
+                Text(
+                    text = uiState.monthlyBudget?.let(::formatCurrency) ?: "—",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Black,
+                )
+            }
+
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(Brush.linearGradient(listOf(SakuraPink, ElectricViolet))),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Outlined.AccountBalanceWallet,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        BudgetProgress(
+            label = "Monthly spending",
+            spent = formatCurrency(uiState.monthlyExpenses),
+            limit = uiState.monthlyBudget?.let(::formatCurrency) ?: "—",
+            progress = uiState.spendingProgress,
+        )
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -210,13 +303,15 @@ private fun BalanceSummaryCard(uiState: DashboardUiState) {
             horizontalArrangement = Arrangement.spacedBy(PennyWiseSpacing.standard),
         ) {
             SummaryMetric(
-                label = "Expenses",
+                label = "Spent",
                 value = formatCurrency(uiState.monthlyExpenses),
+                color = AnimeCoral,
                 modifier = Modifier.weight(1f),
             )
             SummaryMetric(
                 label = "Remaining",
                 value = uiState.remainingBudget?.let(::formatCurrency) ?: "—",
+                color = AnimeEmerald,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -227,28 +322,22 @@ private fun BalanceSummaryCard(uiState: DashboardUiState) {
 private fun SummaryMetric(
     label: String,
     value: String,
+    color: Color,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun SpendingProgressCard(uiState: DashboardUiState) {
-    PennyWiseCard(modifier = Modifier.fillMaxWidth()) {
-        BudgetProgress(
-            label = "Monthly spending",
-            spent = formatCurrency(uiState.monthlyExpenses),
-            limit = uiState.monthlyBudget?.let(::formatCurrency) ?: "—",
-            progress = uiState.spendingProgress,
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            letterSpacing = 0.8.sp,
         )
         Text(
-            text = "${(uiState.spendingProgress * 100).toInt()}% of your monthly budget used",
-            modifier = Modifier.padding(top = PennyWiseSpacing.standard),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.ExtraBold,
+            color = color,
         )
     }
 }
@@ -256,7 +345,7 @@ private fun SpendingProgressCard(uiState: DashboardUiState) {
 @Composable
 private fun IncomeExpenseCard(uiState: DashboardUiState) {
     PennyWiseCard(modifier = Modifier.fillMaxWidth()) {
-        Text("Income vs expenses", style = MaterialTheme.typography.titleLarge)
+        Text("Income vs Expenses", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -286,23 +375,28 @@ private fun IncomeExpenseMetric(
     positive: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = if (positive) Icons.Outlined.ArrowUpward else Icons.Outlined.ArrowDownward,
-            contentDescription = null,
-            tint = if (positive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+    val metricColor = if (positive) AnimeEmerald else AnimeCoral
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
             modifier = Modifier
-                .size(32.dp)
+                .size(38.dp)
                 .clip(CircleShape)
-                .background(
-                    if (positive) MaterialTheme.colorScheme.primaryContainer
-                    else MaterialTheme.colorScheme.errorContainer,
-                )
-                .padding(7.dp),
-        )
+                .background(metricColor.copy(alpha = 0.2f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = if (positive) Icons.Outlined.ArrowUpward else Icons.Outlined.ArrowDownward,
+                contentDescription = null,
+                tint = metricColor,
+                modifier = Modifier.size(20.dp),
+            )
+        }
         Column(modifier = Modifier.padding(start = PennyWiseSpacing.small)) {
             Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = metricColor)
         }
     }
 }
@@ -310,7 +404,7 @@ private fun IncomeExpenseMetric(
 @Composable
 private fun CategorySpendingCard(categories: List<CategorySpending>) {
     PennyWiseCard(modifier = Modifier.fillMaxWidth()) {
-        Text("Where your money goes", style = MaterialTheme.typography.titleLarge)
+        Text("Where Money Goes", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         if (categories.isEmpty()) {
             Text(
                 "Category insights will appear after you add expenses.",
@@ -334,23 +428,21 @@ private fun CategorySpendingRow(category: CategorySpending) {
             .padding(top = PennyWiseSpacing.standard),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .clip(CircleShape)
-                .background(Color(category.colorHex)),
-        )
+        AnimeCategoryBadge(category = category.name, size = 38.dp)
+
         Text(
             text = category.name,
             modifier = Modifier
                 .weight(1f)
                 .padding(start = PennyWiseSpacing.small),
             style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
         )
         Text(
             text = formatCurrency(category.amount),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Bold,
+            color = SakuraPink,
         )
     }
 }
@@ -358,19 +450,16 @@ private fun CategorySpendingRow(category: CategorySpending) {
 @Composable
 private fun EmptyDashboardState(onAddTransaction: () -> Unit) {
     PennyWiseCard(modifier = Modifier.fillMaxWidth()) {
-        Text("Your dashboard is ready", style = MaterialTheme.typography.titleLarge)
-        Text(
-            "Add your first transaction or set a monthly budget to see your financial picture here.",
-            modifier = Modifier.padding(top = PennyWiseSpacing.compact),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        AnimeEmptyStateIllustration(
+            title = "Your Financial Journey Begins!",
+            subtitle = "Add your first transaction or set a monthly budget to see your anime command dashboard come alive.",
         )
         PennyWisePrimaryButton(
-            text = "Add transaction",
+            text = "+ Add First Transaction",
             onClick = onAddTransaction,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = PennyWiseSpacing.large),
+                .padding(top = PennyWiseSpacing.standard),
         )
     }
 }
@@ -383,25 +472,3 @@ private fun formatCurrency(amount: Double): String =
 
 private fun signedCurrency(amount: Double, isIncome: Boolean): String =
     "${if (isIncome) "+" else "−"}${formatCurrency(amount)}"
-
-@Preview(showBackground = true)
-@Composable
-private fun DashboardScreenPreview() {
-    PennyWiseTheme {
-        DashboardContent(
-            uiState = DashboardViewModel.previewState,
-            onAddTransaction = {},
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun EmptyDashboardScreenPreview() {
-    PennyWiseTheme {
-        DashboardContent(
-            uiState = DashboardUiState(),
-            onAddTransaction = {},
-        )
-    }
-}
